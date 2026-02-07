@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load humanize display %}
+{% block title %}{{ tournament.name }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+        <div>
+            <h1 class="title">{{ tournament.name }}</h1>
+            <p class="muted">{{ tournament.description|default:"" }}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                <span class="tag info">{{ tournament.get_status_display }}</span>
+                <span class="tag">Mode : {{ tournament.get_mode_display }}</span>
+                <span class="tag">Rounds : {{ tournament.rounds_planned }}</span>
+                <span class="tag">Début : {{ tournament.start_datetime|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+        <div class="grid" style="gap:8px;">
+            {% if user.is_authenticated and tournament.is_registration_open %}
+                {% if user_registration %}
+                    <form method="post" action="{% url 'tournament_unregister' tournament.pk %}">
+                        {% csrf_token %}
+                        <button class="btn danger" type="submit">Se désinscrire</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'tournament_register' tournament.pk %}">
+                        {% csrf_token %}
+                        <button class="btn primary" type="submit">S'inscrire</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+            {% if user.is_staff %}
+                <a class="btn" href="{% url 'tournament_edit' tournament.pk %}">Modifier le tournoi</a>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a class="btn" href="{% url 'tournament_open_reg' tournament.pk %}">Ouvrir inscriptions</a>
+                    <a class="btn" href="{% url 'tournament_close_reg' tournament.pk %}">Fermer inscriptions</a>
+                    <a class="btn primary" href="{% url 'tournament_start' tournament.pk %}">Lancer</a>
+                    <a class="btn" href="{% url 'tournament_next_round' tournament.pk %}">Round suivant</a>
+                    <a class="btn" href="{% url 'tournament_complete' tournament.pk %}">Clôturer</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-top:16px;">
+    <div class="card">
+        <h2 class="title" style="font-size:20px;">Classement en direct</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th><th>Joueur</th><th>Pts</th><th>Buchholz</th><th>Blancs</th><th>Noirs</th><th>Parties</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in standings %}
+                <tr class="podium-{% if forloop.counter <= 3 %}{{ forloop.counter }}{% endif %}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.user|user_with_elo }}</td>
+                    <td>{{ row.score }}</td>
+                    <td>{{ row.buchholz|floatformat:1 }}</td>
+                    <td>{{ row.whites }}</td>
+                    <td>{{ row.blacks }}</td>
+                    <td>{{ row.matches_played }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">Personne n'est inscrit.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2 class="title" style="font-size:20px;">Participants ({{ registrations|length }})</h2>
+        <div class="muted">Les couleurs seront équilibrées automatiquement à chaque round.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+            {% for reg in registrations %}
+                <span class="tag">{{ reg.user|user_with_elo }}</span>
+            {% empty %}
+                <p>Aucun inscrit pour l'instant.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card pairings" style="margin-top:16px;">
+    <h2 class="title" style="font-size:20px;">Appariements & résultats</h2>
+    {% for round in rounds %}
+        <div class="card" style="margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3>Round {{ round.number }}</h3>
+                {% if round.is_complete %}<span class="tag success">Terminé</span>{% else %}<span class="tag">En cours</span>{% endif %}
+            </div>
+            {% for match in round.matches.all %}
+                <div class="match">
+                    {% if match.result == "white" %}
+                        <div>
+                            <strong>Blancs</strong> : <span class="text-win">{{ match.white_player|user_with_elo|default:"-" }}</span><br>
+                            <strong>Noirs</strong> : <span class="text-loss">{{ match.black_player|user_with_elo|default:"-" }}</span>
+                        </div>
+                    {% elif match.result == "black" %}
+                        <div>
+                            <strong>Blancs</strong> : <span class="text-loss">{{ match.white_player|user_with_elo|default:"-" }}</span><br>
+                            <strong>Noirs</strong> : <span class="text-win">{{ match.black_player|user_with_elo|default:"-" }}</span>
+                        </div>
+                    {% elif match.result == "draw" %}
+                        <div>
+                            <strong>Blancs</strong> : <span class="text-draw">{{ match.white_player|user_with_elo|default:"-" }}</span><br>
+                            <strong>Noirs</strong> : <span class="text-draw">{{ match.black_player|user_with_elo|default:"-" }}</span>
+                        </div>
+                    {% elif match.result == "bye" %}
+                        <div>
+                            <strong>Blancs</strong> : <span class="text-win">{{ match.white_player|user_with_elo|default:"-" }}</span><br>
+                            <strong>Noirs</strong> : <span class="muted">Exempt</span>
+                        </div>
+                    {% else %}
+                        <div>
+                            <strong>Blancs</strong> : {{ match.white_player|user_with_elo|default:"-" }}<br>
+                            <strong>Noirs</strong> : {{ match.black_player|user_with_elo|default:"-" }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        {% if match.result == "white" %}<span class="badge win">Victoire blancs</span>{% endif %}
+                        {% if match.result == "black" %}<span class="badge win">Victoire noirs</span>{% endif %}
+                        {% if match.result == "draw" %}<span class="badge draw">Nulle</span>{% endif %}
+                        {% if match.result == "pending" %}<span class="badge">En attente</span>{% endif %}
+                        {% if match.result == "bye" %}<span class="badge">Exempt</span>{% endif %}
+                        {% if user.is_authenticated and match.result == "pending" and match.result != "bye" and tournament.status == "running" %}
+                            {% if user.is_staff %}
+                                <a class="btn" style="margin-left:10px;" href="{% url 'submit_result' tournament.pk match.pk %}">Saisir</a>
+                            {% elif tournament.mode == "player" %}
+                                {% if match.white_player == user or match.black_player == user %}
+                                    <a class="btn" style="margin-left:10px;" href="{% url 'submit_result' tournament.pk match.pk %}">Saisir</a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% empty %}
+        <p>Aucun round généré pour l'instant.</p>
+    {% endfor %}
+</div>
+{% endblock %}

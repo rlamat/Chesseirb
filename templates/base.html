@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chesseirb | {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <img src="{% static 'img/logo.png' %}" alt="Chesseirb" class="logo">
+            <div>
+                <div class="brand-name">Chesseirb</div>
+                <div class="brand-sub">Club d'échecs de l'ENSEIRB</div>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="{% url 'tournament_list_open' %}">Tournois ouverts</a>
+            <a href="{% url 'tournament_list_completed' %}">Archives</a>
+            {% if user.is_staff %}
+                <a href="{% url 'admin_users' %}">Comptes admin</a>
+                <a class="pill" href="{% url 'tournament_create' %}">Nouveau tournoi</a>
+            {% endif %}
+            {% if user.is_authenticated %}
+                <span class="tag">{{ user.username }}</span>
+                <a href="{% url 'profile' %}">Mon profil</a>
+                <a href="{% url 'logout' %}">Déconnexion</a>
+            {% else %}
+                <a href="{% url 'login' %}">Connexion</a>
+                <a class="pill" href="{% url 'signup' %}">Créer un compte</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        {% if messages %}
+            <div class="flash">
+                {% for message in messages %}
+                    <div class="flash-item {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">
+        <div>ENSEIRB · {% now "Y" %}</div>
+        <div>Tournoi suisse simplifié avec départage Buchholz</div>
+    </footer>
+</body>
+</html>

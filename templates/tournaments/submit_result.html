@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Résultat{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 class="title">Saisir le résultat</h1>
+    <p class="muted">{{ match.white_player }} (blancs) vs {{ match.black_player }} (noirs)</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn primary" type="submit">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

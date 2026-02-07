@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Tournois ouverts{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 class="title">Tournois ouverts aux inscriptions</h1>
+    {% if user.is_staff %}
+        <a class="btn primary" href="{% url 'tournament_create' %}">Créer un tournoi</a>
+    {% endif %}
+    <p class="muted">Choisissez un tournoi et inscrivez-vous tant qu'il reste du temps.</p>
+    <div class="grid grid-2" style="margin-top:14px;">
+        {% for t in tournaments %}
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div class="title" style="font-size:20px;">{{ t.name }}</div>
+                        <div class="muted">Début : {{ t.start_datetime|date:"d/m/Y H:i" }}</div>
+                        <div class="muted">Rounds prévus : {{ t.rounds_planned }} · Mode : {{ t.get_mode_display }}</div>
+                    </div>
+                    <a class="btn primary" href="{% url 'tournament_detail' t.pk %}">Voir</a>
+                </div>
+            </div>
+        {% empty %}
+            <p>Aucun tournoi ouvert pour le moment.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

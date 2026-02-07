@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load display %}
+{% block title %}Mon profil{% endblock %}
+{% block content %}
+<div class="grid grid-2">
+    <div class="card">
+        <h1 class="title">Profil</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn primary" type="submit">Mettre à jour</button>
+        </form>
+    </div>
+    <div class="card">
+        <h2 class="title" style="font-size:20px;">Statistiques</h2>
+        <p class="muted">Basées sur les tournois organisés sur le site.</p>
+        <ul>
+            <li>Victoires : {{ stats.wins }}</li>
+            <li>Défaites : {{ stats.losses }}</li>
+            <li>Nulles : {{ stats.draws }}</li>
+            <li>Taux de victoire avec les blancs : {{ stats.white_win_rate }}%</li>
+            <li>Taux de victoire avec les noirs : {{ stats.black_win_rate }}%</li>
+        </ul>
+        <h4>Défaites</h4>
+        <ul>
+            {% for d in stats.defeats %}
+                <li>{{ d.opponent|user_with_elo }} ({{ d.color }}) - Round {{ d.round }}</li>
+            {% empty %}
+                <li>Aucune défaite enregistrée.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

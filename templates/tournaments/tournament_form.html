@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Tournoi{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 class="title">{% if tournament %}Modifier{% else %}Créer{% endif %} un tournoi</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn primary" type="submit">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

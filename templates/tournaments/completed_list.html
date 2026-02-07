@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Tournois terminés{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 class="title">Tournois terminés</h1>
+    <div class="grid grid-2" style="margin-top:14px;">
+        {% for t in tournaments %}
+            <div class="card">
+                <div class="title" style="font-size:20px;">{{ t.name }}</div>
+                <div class="muted">Terminé le {{ t.start_datetime|date:"d/m/Y" }}</div>
+                <a class="btn" href="{% url 'tournament_detail' t.pk %}">Voir les résultats</a>
+            </div>
+        {% empty %}
+            <p>Aucune archive pour l'instant.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
