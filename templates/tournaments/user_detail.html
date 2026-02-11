@@ -7,8 +7,6 @@
         <h1 class="title">Profil</h1>
         <p><strong>Pseudo :</strong> {{ target_user.username }}</p>
         <p><strong>Nom :</strong> {{ target_user.last_name }} {{ target_user.first_name }}</p>
-        <p><strong>Email :</strong> {{ target_user.email|default:"-" }}</p>
-        <p><strong>Dernière connexion :</strong> {{ target_user.last_login }}</p>
     </div>
     <div class="card">
         <h2 class="title" style="font-size:20px;">Statistiques</h2>
