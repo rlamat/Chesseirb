@@ -3,7 +3,11 @@
 {% block content %}
 <div class="card">
     <h1 class="title">Gestion des comptes</h1>
-    <p class="muted">Utilisateurs inscrits aux tournois (actions : bannir/débannir, supprimer, passer admin). Pagination par 20.</p>
+    <p class="muted">Utilisateurs connectés au moins une fois (actions : bannir/débannir, supprimer, gérer droits admin). Pagination par 20.</p>
+    <form method="get" class="form-inline" style="margin-bottom:12px;">
+        <input type="text" name="q" placeholder="Rechercher (pseudo, nom, email)" value="{{ query }}" style="width:60%;max-width:380px;">
+        <button class="btn" type="submit">Rechercher</button>
+    </form>
     <table class="table">
         <thead>
             <tr>
@@ -17,7 +21,7 @@
         <tbody>
         {% for u in page_obj %}
             <tr>
-                <td>{{ u.username }}</td>
+                <td style="{% if u.is_staff %}color:#c0392b;font-weight:600;{% endif %}">{{ u.username }}</td>
                 <td>{{ u.email|default:"-" }}</td>
                 <td>{{ u.is_staff|yesno:"Oui,Non" }}</td>
                 <td>{{ u.profile.is_banned|yesno:"Oui,Non" }}</td>

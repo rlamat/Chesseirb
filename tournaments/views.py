@@ -268,11 +268,16 @@ def admin_users(request):
     from django.contrib.auth import get_user_model
 
     User = get_user_model()
-    users = (
-        User.objects.filter(last_login__isnull=False)
-        .select_related("profile")
-        .order_by("username")
-    )
+    query = (request.GET.get("q") or "").strip()
+    users = User.objects.filter(last_login__isnull=False).select_related("profile")
+    if query:
+        users = users.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+        )
+    users = users.order_by("username")
 
     paginator = Paginator(users, 20)
     page_number = request.GET.get("page")
@@ -316,6 +321,7 @@ def admin_users(request):
         "tournaments/admin_users.html",
         {
             "page_obj": page_obj,
+            "query": query,
         },
     )
 
