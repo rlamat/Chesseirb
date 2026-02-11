@@ -31,13 +31,15 @@
                             <button class="btn" name="action" value="unban">Débannir</button>
                         {% endif %}
                     </form>
-                    {% if not u.is_staff %}
                     <form method="post" style="display:inline;">
                         {% csrf_token %}
                         <input type="hidden" name="user_id" value="{{ u.id }}">
-                        <button class="btn" name="action" value="promote">Passer admin</button>
+                        {% if not u.is_staff %}
+                            <button class="btn" name="action" value="promote">Passer admin</button>
+                        {% else %}
+                            <button class="btn warning" name="action" value="demote">Retirer admin</button>
+                        {% endif %}
                     </form>
-                    {% endif %}
                     <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer le compte ?');">
                         {% csrf_token %}
                         <input type="hidden" name="user_id" value="{{ u.id }}">

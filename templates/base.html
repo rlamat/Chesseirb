@@ -28,7 +28,7 @@
                 <a href="{% url 'profile' %}">Mon profil</a>
                 <a href="{% url 'logout' %}">Déconnexion</a>
             {% else %}
-                <a href="{% url 'login' %}">Connexion</a>
+                <a href="{% url 'cas_login' %}">Connexion</a>
                 <a class="pill" href="{% url 'signup' %}">Créer un compte</a>
             {% endif %}
         </nav>

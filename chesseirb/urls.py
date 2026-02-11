@@ -16,9 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from . import cas_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('cas/login/', cas_views.cas_login, name='cas_login'),
+    path('cas/callback/', cas_views.cas_callback, name='cas_callback'),
+    path('accounts/login/', cas_views.cas_login, name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('tournaments.urls')),
 ]

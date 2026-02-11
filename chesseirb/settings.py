@@ -128,4 +128,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'tournament_list_open'
 LOGOUT_REDIRECT_URL = 'tournament_list_open'
-LOGIN_URL = 'login'
+LOGIN_URL = 'cas_login'
+
+# CAS configuration (service-based flow)
+CAS_SERVER_URL = 'https://cas.bordeaux-inp.fr'
+CAS_VALIDATE_ENDPOINT = f'{CAS_SERVER_URL}/serviceValidate'
+# Si défini, utilise un service proxy déjà autorisé (ex: https://cas.serveur-bde.eirb.fr)
+CAS_PROXY_BASE = 'https://cas.serveur-bde.eirb.fr'
+CAS_PROXY_TOKEN_PARAM = 'token'
+# Si vous avez un domaine HTTPS public autorisé directement par CAS, définissez-le.
+# Sinon laissez None et utilisez le proxy ci-dessus.
+CAS_SERVICE_BASE = None

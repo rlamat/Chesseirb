@@ -300,6 +300,11 @@ def admin_users(request):
             target.is_superuser = True
             target.save(update_fields=["is_staff", "is_superuser"])
             messages.success(request, f"{target.username} est désormais administrateur.")
+        elif action == "demote":
+            target.is_staff = False
+            target.is_superuser = False
+            target.save(update_fields=["is_staff", "is_superuser"])
+            messages.info(request, f"Les droits admin de {target.username} ont été retirés.")
         elif action == "delete":
             target.delete()
             messages.warning(request, "Compte supprimé.")
