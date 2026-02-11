@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Comptes{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 class="title">Comptes</h1>
+    <form method="get" class="form-inline" style="margin-bottom:12px;">
+        <input type="text" name="q" placeholder="Rechercher (pseudo, nom, email)" value="{{ query }}" style="width:60%;max-width:380px;">
+        <button class="btn" type="submit">Rechercher</button>
+    </form>
+    <p class="muted">Tri alphabétique. Seuls les comptes connectés au moins une fois apparaissent.</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Pseudo</th>
+                <th>Nom</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+            <tr>
+                <td><a href="{% url 'user_detail' u.id %}">{{ u.username }}</a></td>
+                <td>{{ u.last_name }} {{ u.first_name }}</td>
+                <td>{{ u.email|default:"-" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3">Aucun compte trouvé.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

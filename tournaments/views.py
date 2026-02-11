@@ -265,15 +265,14 @@ def can_submit_result(tournament, match, user):
 def admin_users(request):
     from django.core.paginator import Paginator
 
-    users_qs = (
-        TournamentRegistration.objects.select_related("user")
-        .values_list("user_id", flat=True)
-        .distinct()
-    )
     from django.contrib.auth import get_user_model
 
     User = get_user_model()
-    users = User.objects.filter(id__in=users_qs).select_related("profile").order_by("username")
+    users = (
+        User.objects.filter(last_login__isnull=False)
+        .select_related("profile")
+        .order_by("username")
+    )
 
     paginator = Paginator(users, 20)
     page_number = request.GET.get("page")
@@ -318,6 +317,41 @@ def admin_users(request):
         {
             "page_obj": page_obj,
         },
+    )
+
+@login_required
+def user_search(request):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    query = (request.GET.get("q") or "").strip()
+    users = User.objects.filter(last_login__isnull=False)
+    if query:
+        users = users.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+        )
+    users = users.order_by("username")
+    return render(
+        request,
+        "tournaments/user_search.html",
+        {"users": users, "query": query},
+    )
+
+
+@login_required
+def user_detail(request, user_id):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    user = get_object_or_404(User.objects.select_related("profile"), pk=user_id, last_login__isnull=False)
+    stats = user_stats(user)
+    return render(
+        request,
+        "tournaments/user_detail.html",
+        {"target_user": user, "stats": stats},
     )
 
 

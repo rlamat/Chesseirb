@@ -19,6 +19,7 @@
         <nav class="nav-links">
             <a href="{% url 'tournament_list_open' %}">Tournois ouverts</a>
             <a href="{% url 'tournament_list_completed' %}">Archives</a>
+            <a href="{% url 'user_search' %}">Comptes</a>
             {% if user.is_staff %}
                 <a href="{% url 'admin_users' %}">Comptes admin</a>
                 <a class="pill" href="{% url 'tournament_create' %}">Nouveau tournoi</a>
@@ -29,7 +30,6 @@
                 <a href="{% url 'logout' %}">Déconnexion</a>
             {% else %}
                 <a href="{% url 'cas_login' %}">Connexion</a>
-                <a class="pill" href="{% url 'signup' %}">Créer un compte</a>
             {% endif %}
         </nav>
     </header>

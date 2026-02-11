@@ -24,4 +24,6 @@ urlpatterns = [
     ),
     path("staff/users/", views.admin_users, name="admin_users"),
     path("admin/users/", views.admin_users, name="admin_users_legacy"),
+    path("users/", views.user_search, name="user_search"),
+    path("users/<int:user_id>/", views.user_detail, name="user_detail"),
 ]

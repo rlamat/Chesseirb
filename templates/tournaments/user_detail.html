@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load display %}
+{% block title %}Profil {{ target_user.username }}{% endblock %}
+{% block content %}
+<div class="grid grid-2">
+    <div class="card">
+        <h1 class="title">Profil</h1>
+        <p><strong>Pseudo :</strong> {{ target_user.username }}</p>
+        <p><strong>Nom :</strong> {{ target_user.last_name }} {{ target_user.first_name }}</p>
+        <p><strong>Email :</strong> {{ target_user.email|default:"-" }}</p>
+        <p><strong>Dernière connexion :</strong> {{ target_user.last_login }}</p>
+    </div>
+    <div class="card">
+        <h2 class="title" style="font-size:20px;">Statistiques</h2>
+        <p class="muted">Basées sur les tournois organisés sur le site.</p>
+        <ul>
+            <li>Victoires : {{ stats.wins }}</li>
+            <li>Défaites : {{ stats.losses }}</li>
+            <li>Nulles : {{ stats.draws }}</li>
+            <li>Taux de victoire avec les blancs : {{ stats.white_win_rate }}%</li>
+            <li>Taux de victoire avec les noirs : {{ stats.black_win_rate }}%</li>
+        </ul>
+        <h4>Défaites</h4>
+        <ul>
+            {% for d in stats.defeats %}
+                <li>{{ d.opponent|user_with_elo }} ({{ d.color }}) - Round {{ d.round }}</li>
+            {% empty %}
+                <li>Aucune défaite enregistrée.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -5,6 +5,5 @@
     <h1 class="title">Connexion</h1>
     <p>Vous allez être redirigé vers l'authentification CAS de Bordeaux INP.</p>
     <a class="btn primary" href="{% url 'cas_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Se connecter avec CAS</a>
-    <p class="muted">Besoin d'un compte local ? <a href="{% url 'signup' %}">Créer un compte</a></p>
 </div>
 {% endblock %}
