@@ -1,7 +1,17 @@
 {% extends "base.html" %}
 {% load humanize display %}
 {% block title %}{{ tournament.name }}{% endblock %}
+{% block head_extra %}{% if tournament.status == "running" %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
 {% block content %}
+{% if user_pending_match %}
+<div class="flash-item success" style="margin-bottom:12px;">
+    Vous avez un match en attente au round {{ tournament.current_round }} :
+    <strong>{{ user_pending_match.white_player }} (blancs)</strong> vs <strong>{{ user_pending_match.black_player }} (noirs)</strong>.
+    {% if tournament.mode == "player" or user.is_staff %}
+        <a class="btn primary" style="margin-left:10px;" href="{% url 'submit_result' tournament.pk user_pending_match.pk %}">Saisir le résultat</a>
+    {% endif %}
+</div>
+{% endif %}
 <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
         <div>

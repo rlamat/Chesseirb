@@ -44,6 +44,35 @@ def tournament_list_completed(request):
     return render(request, "tournaments/completed_list.html", {"tournaments": tournaments})
 
 
+def tournament_list_running(request):
+    tournaments = Tournament.objects.filter(
+        status=Tournament.STATUS_RUNNING
+    ).order_by("start_datetime")
+
+    # For each tournament, find the authenticated user's pending match in the current round
+    user_pending_matches = {}
+    if request.user.is_authenticated:
+        for t in tournaments:
+            current_round = t.rounds.filter(number=t.current_round).prefetch_related(
+                "matches__white_player", "matches__black_player"
+            ).first()
+            if current_round:
+                pending_match = current_round.matches.filter(
+                    Q(white_player=request.user) | Q(black_player=request.user),
+                    result=Match.RESULT_PENDING,
+                ).first()
+                user_pending_matches[t.pk] = pending_match
+
+    return render(
+        request,
+        "tournaments/running_list.html",
+        {
+            "tournaments": tournaments,
+            "user_pending_matches": user_pending_matches,
+        },
+    )
+
+
 @login_required
 def profile(request):
     profile = request.user.profile
@@ -108,8 +137,18 @@ def tournament_detail(request, pk):
         tournament=tournament, is_active=True
     ).select_related("user")
     user_registration = None
+    user_pending_match = None
     if request.user.is_authenticated:
         user_registration = registrations.filter(user=request.user).first()
+        if tournament.is_running:
+            current_round = tournament.rounds.filter(number=tournament.current_round).first()
+            if current_round:
+                user_pending_match = current_round.matches.filter(
+                    Q(white_player=request.user) | Q(black_player=request.user),
+                    result=Match.RESULT_PENDING,
+                ).exclude(
+                    white_player__isnull=False, black_player__isnull=True
+                ).first()
 
     standings = standings_for_tournament(tournament)
     rounds = (
@@ -117,7 +156,6 @@ def tournament_detail(request, pk):
             "matches__white_player", "matches__black_player"
         ).all()
     )
-    can_report = tournament.mode == Tournament.MODE_PLAYER
 
     return render(
         request,
@@ -128,7 +166,7 @@ def tournament_detail(request, pk):
             "user_registration": user_registration,
             "standings": standings,
             "rounds": rounds,
-            "can_report": can_report,
+            "user_pending_match": user_pending_match,
         },
     )
 

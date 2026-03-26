@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"websocket\\\\|socket\\\\|async\\\\|channels\" /c/Users/remil/Documents/Chesseirb --include=*.py)"
+    ]
+  }
+}

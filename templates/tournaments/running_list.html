@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load humanize display %}
+{% block title %}Tournois en cours{% endblock %}
+{% block content %}
+<div class="card">
+    <h1 class="title">Tournois en cours</h1>
+    <p class="muted">Retrouvez ici tous les tournois actuellement en cours. Cliquez sur un tournoi pour consulter les appariements et saisir vos résultats.</p>
+</div>
+
+{% if tournaments %}
+    {% for t in tournaments %}
+        {% with pending_match=user_pending_matches|get_item:t.pk %}
+        <div class="card" style="margin-top:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+                <div>
+                    <div class="title" style="font-size:20px;">{{ t.name }}</div>
+                    <div class="muted">Début : {{ t.start_datetime|date:"d/m/Y H:i" }}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+                        <span class="tag info">En cours</span>
+                        <span class="tag">Mode : {{ t.get_mode_display }}</span>
+                        <span class="tag">Round {{ t.current_round }} / {{ t.rounds_planned }}</span>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                    {% if pending_match %}
+                        {% if t.mode == "player" or user.is_staff %}
+                            <a class="btn primary" href="{% url 'submit_result' t.pk pending_match.pk %}">
+                                Saisir mon résultat (Round {{ t.current_round }})
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    <a class="btn" href="{% url 'tournament_detail' t.pk %}">Voir le tournoi</a>
+                </div>
+            </div>
+
+            {% if pending_match %}
+                <div class="flash-item success" style="margin-top:12px;">
+                    Votre match du round {{ t.current_round }} : <strong>{{ pending_match.white_player }} (blancs)</strong> vs <strong>{{ pending_match.black_player }} (noirs)</strong> — résultat en attente.
+                </div>
+            {% elif user.is_authenticated %}
+                <div class="muted" style="margin-top:10px;font-size:13px;">
+                    Vous n'avez pas de match en attente à ce round.
+                </div>
+            {% endif %}
+        </div>
+        {% endwith %}
+    {% endfor %}
+{% else %}
+    <div class="card" style="margin-top:14px;">
+        <p>Aucun tournoi en cours pour le moment.</p>
+    </div>
+{% endif %}
+{% endblock %}
