@@ -140,30 +140,22 @@
                             {# Pending match during running tournament: eligible players or admins #}
                             {% if match.result == "pending" and tournament.is_running %}
                                 {% if user.is_staff or tournament.mode == "player" and match.white_player == user or tournament.mode == "player" and match.black_player == user %}
-                                    <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Saisir</button>
-                                    <span id="form-{{ match.pk }}" style="display:none;">
-                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
-                                            {% csrf_token %}
-                                            <button type="submit" name="result" value="white" class="btn btn-result">⬜ Blancs</button>
-                                            <button type="submit" name="result" value="draw" class="btn btn-result btn-draw">— Nulle</button>
-                                            <button type="submit" name="result" value="black" class="btn btn-result">⬛ Noirs</button>
-                                            <button type="button" class="btn btn-result" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
-                                        </form>
-                                    </span>
+                                    <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                                        {% csrf_token %}
+                                        <button type="submit" name="result" value="white" class="btn btn-result">⬜ Blancs</button>
+                                        <button type="submit" name="result" value="draw" class="btn btn-result btn-draw">— Nulle</button>
+                                        <button type="submit" name="result" value="black" class="btn btn-result">⬛ Noirs</button>
+                                    </form>
                                 {% endif %}
                             {# Result already set OR tournament completed: only admins can modify #}
                             {% elif user.is_staff and tournament.is_running or user.is_staff and tournament.is_completed %}
                                 {% if match.result != "pending" %}
-                                    <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Modifier</button>
-                                    <span id="form-{{ match.pk }}" style="display:none;">
-                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
-                                            {% csrf_token %}
-                                            <button type="submit" name="result" value="white" class="btn btn-result {% if match.result == 'white' %}active{% endif %}">⬜ Blancs</button>
-                                            <button type="submit" name="result" value="draw" class="btn btn-result btn-draw {% if match.result == 'draw' %}active{% endif %}">— Nulle</button>
-                                            <button type="submit" name="result" value="black" class="btn btn-result {% if match.result == 'black' %}active{% endif %}">⬛ Noirs</button>
-                                            <button type="button" class="btn btn-result" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
-                                        </form>
-                                    </span>
+                                    <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                                        {% csrf_token %}
+                                        <button type="submit" name="result" value="white" class="btn btn-result {% if match.result == 'white' %}active{% endif %}">⬜ Blancs</button>
+                                        <button type="submit" name="result" value="draw" class="btn btn-result btn-draw {% if match.result == 'draw' %}active{% endif %}">— Nulle</button>
+                                        <button type="submit" name="result" value="black" class="btn btn-result {% if match.result == 'black' %}active{% endif %}">⬛ Noirs</button>
+                                    </form>
                                 {% endif %}
                             {% endif %}
                         {% endif %}
@@ -177,18 +169,6 @@
 </div>
 
 <script>
-function toggleResultForm(formId, btnId) {
-    var form = document.getElementById(formId);
-    var btn = document.getElementById(btnId);
-    if (form.style.display === 'none') {
-        form.style.display = 'inline';
-        btn.style.display = 'none';
-    } else {
-        form.style.display = 'none';
-        btn.style.display = 'inline-block';
-    }
-}
-
 {% if tournament.status == "registration" %}
 (function() {
     var participantsUrl = "{% url 'tournament_participants_json' tournament.pk %}";
