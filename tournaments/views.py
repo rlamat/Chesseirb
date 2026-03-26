@@ -17,6 +17,26 @@ def staff_required(view_func):
     return user_passes_test(lambda u: u.is_staff)(view_func)
 
 
+def auto_start_due_tournaments():
+    """Start any registration-open tournaments whose start_datetime has passed."""
+    due = Tournament.objects.filter(
+        status=Tournament.STATUS_REGISTRATION,
+        start_datetime__lte=timezone.now(),
+    )
+    for tournament in due:
+        # Atomic flip — only proceeds if still in REGISTRATION state
+        updated = Tournament.objects.filter(
+            pk=tournament.pk,
+            status=Tournament.STATUS_REGISTRATION,
+        ).update(status=Tournament.STATUS_RUNNING)
+        if updated:
+            tournament.refresh_from_db()
+            try:
+                generate_next_round(tournament)
+            except ValueError:
+                pass
+
+
 def signup(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
@@ -31,6 +51,7 @@ def signup(request):
 
 
 def tournament_list_open(request):
+    auto_start_due_tournaments()
     tournaments = Tournament.objects.filter(
         status=Tournament.STATUS_REGISTRATION
     ).order_by("start_datetime")
@@ -45,6 +66,7 @@ def tournament_list_completed(request):
 
 
 def tournament_list_running(request):
+    auto_start_due_tournaments()
     tournaments = Tournament.objects.filter(
         status=Tournament.STATUS_RUNNING
     ).order_by("start_datetime")
@@ -142,6 +164,7 @@ def user_stats(user):
 
 
 def tournament_detail(request, pk):
+    auto_start_due_tournaments()
     tournament = get_object_or_404(Tournament, pk=pk)
     registrations = TournamentRegistration.objects.filter(
         tournament=tournament, is_active=True
@@ -443,20 +466,28 @@ def submit_result(request, pk, match_id):
             if rnd.matches.filter(result=Match.RESULT_PENDING).count() == 0:
                 rnd.ended_at = timezone.now()
                 rnd.save(update_fields=["ended_at"])
-                # Auto-génération du round suivant si possible
                 if (
                     tournament.status == Tournament.STATUS_RUNNING
                     and tournament.current_round == rnd.number
-                    and tournament.current_round < tournament.rounds_planned
                 ):
-                    try:
-                        generate_next_round(tournament)
+                    if tournament.current_round < tournament.rounds_planned:
+                        # Generate next round
+                        try:
+                            generate_next_round(tournament)
+                            messages.success(
+                                request,
+                                f"Round {rnd.number} terminé. Appariements du round {tournament.current_round} générés.",
+                            )
+                        except ValueError:
+                            pass
+                    else:
+                        # Last round complete — auto-close the tournament
+                        tournament.status = Tournament.STATUS_COMPLETED
+                        tournament.save(update_fields=["status"])
                         messages.success(
                             request,
-                            f"Round {rnd.number} terminé. Appariements du round {tournament.current_round} générés.",
+                            "Tous les rounds sont terminés. Le tournoi a été clôturé automatiquement.",
                         )
-                    except ValueError:
-                        pass
             messages.success(request, "Résultat enregistré.")
             return redirect("tournament_detail", pk=pk)
     else:

@@ -136,9 +136,9 @@
                         {% if match.result == "bye" %}<span class="badge">Exempt</span>{% endif %}
 
                         {# --- Inline result form --- #}
-                        {% if user.is_authenticated and tournament.status == "running" and match.result != "bye" %}
-                            {# Pending match: show form to eligible players or admins #}
-                            {% if match.result == "pending" %}
+                        {% if user.is_authenticated and match.result != "bye" %}
+                            {# Pending match during running tournament: eligible players or admins #}
+                            {% if match.result == "pending" and tournament.is_running %}
                                 {% if user.is_staff or tournament.mode == "player" and match.white_player == user or tournament.mode == "player" and match.black_player == user %}
                                     <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Saisir</button>
                                     <span id="form-{{ match.pk }}" style="display:none;">
@@ -155,9 +155,9 @@
                                         </form>
                                     </span>
                                 {% endif %}
-                            {% else %}
-                                {# Result already set: only admins can modify #}
-                                {% if user.is_staff %}
+                            {# Result already set OR tournament completed: only admins can modify #}
+                            {% elif user.is_staff and tournament.is_running or user.is_staff and tournament.is_completed %}
+                                {% if match.result != "pending" %}
                                     <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Modifier</button>
                                     <span id="form-{{ match.pk }}" style="display:none;">
                                         <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:6px;">
