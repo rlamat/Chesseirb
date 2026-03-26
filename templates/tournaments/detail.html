@@ -135,23 +135,19 @@
                         {% if match.result == "pending" %}<span class="badge">En attente</span>{% endif %}
                         {% if match.result == "bye" %}<span class="badge">Exempt</span>{% endif %}
 
-                        {# --- Inline result form --- #}
+                        {# --- Inline result buttons --- #}
                         {% if user.is_authenticated and match.result != "bye" %}
                             {# Pending match during running tournament: eligible players or admins #}
                             {% if match.result == "pending" and tournament.is_running %}
                                 {% if user.is_staff or tournament.mode == "player" and match.white_player == user or tournament.mode == "player" and match.black_player == user %}
                                     <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Saisir</button>
                                     <span id="form-{{ match.pk }}" style="display:none;">
-                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:6px;">
+                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
                                             {% csrf_token %}
-                                            <select name="result" class="select-inline">
-                                                <option value="">-- résultat --</option>
-                                                <option value="white">Victoire blancs</option>
-                                                <option value="black">Victoire noirs</option>
-                                                <option value="draw">Nulle</option>
-                                            </select>
-                                            <button type="submit" class="btn primary">Valider</button>
-                                            <button type="button" class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
+                                            <button type="submit" name="result" value="white" class="btn btn-result">⬜ Blancs</button>
+                                            <button type="submit" name="result" value="draw" class="btn btn-result btn-draw">— Nulle</button>
+                                            <button type="submit" name="result" value="black" class="btn btn-result">⬛ Noirs</button>
+                                            <button type="button" class="btn btn-result" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
                                         </form>
                                     </span>
                                 {% endif %}
@@ -160,16 +156,12 @@
                                 {% if match.result != "pending" %}
                                     <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Modifier</button>
                                     <span id="form-{{ match.pk }}" style="display:none;">
-                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:6px;">
+                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
                                             {% csrf_token %}
-                                            <select name="result" class="select-inline">
-                                                <option value="">-- résultat --</option>
-                                                <option value="white" {% if match.result == "white" %}selected{% endif %}>Victoire blancs</option>
-                                                <option value="black" {% if match.result == "black" %}selected{% endif %}>Victoire noirs</option>
-                                                <option value="draw" {% if match.result == "draw" %}selected{% endif %}>Nulle</option>
-                                            </select>
-                                            <button type="submit" class="btn primary">Valider</button>
-                                            <button type="button" class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
+                                            <button type="submit" name="result" value="white" class="btn btn-result {% if match.result == 'white' %}active{% endif %}">⬜ Blancs</button>
+                                            <button type="submit" name="result" value="draw" class="btn btn-result btn-draw {% if match.result == 'draw' %}active{% endif %}">— Nulle</button>
+                                            <button type="submit" name="result" value="black" class="btn btn-result {% if match.result == 'black' %}active{% endif %}">⬛ Noirs</button>
+                                            <button type="button" class="btn btn-result" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
                                         </form>
                                     </span>
                                 {% endif %}

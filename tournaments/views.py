@@ -453,7 +453,11 @@ def submit_result(request, pk, match_id):
     tournament = get_object_or_404(Tournament, pk=pk)
     match = get_object_or_404(Match, pk=match_id, round__tournament=tournament)
     if not can_submit_result(tournament, match, request.user):
-        return HttpResponseForbidden("Vous ne pouvez pas saisir ce résultat.")
+        if match.result != Match.RESULT_PENDING:
+            messages.warning(request, "Ce résultat a déjà été saisi et ne peut plus être modifié.")
+        else:
+            messages.error(request, "Vous n'êtes pas autorisé à saisir ce résultat.")
+        return redirect("tournament_detail", pk=pk)
 
     if request.method == "POST":
         form = MatchResultForm(request.POST, instance=match)

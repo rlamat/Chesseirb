@@ -133,6 +133,10 @@ form textarea { min-height: 100px; }
 }
 .select-inline option { background: var(--panel); color: var(--text); }
 
+.btn-result { padding: 5px 10px; font-size: 12px; font-weight: 700; }
+.btn-result.btn-draw { background: rgba(96,165,250,0.15); border-color: rgba(96,165,250,0.35); color: #dbeafe; }
+.btn-result.active { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .flash { margin-bottom: 18px; display: grid; gap: 10px; }
 .flash-item { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); }
 .flash-item.success { border-color: rgba(52,211,153,0.5); background: rgba(52,211,153,0.12); }
