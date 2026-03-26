@@ -23,6 +23,11 @@ urlpatterns = [
         views.submit_result,
         name="submit_result",
     ),
+    path(
+        "tournaments/<int:pk>/participants.json",
+        views.tournament_participants_json,
+        name="tournament_participants_json",
+    ),
     path("staff/users/", views.admin_users, name="admin_users"),
     path("admin/users/", views.admin_users, name="admin_users_legacy"),
     path("users/", views.user_search, name="user_search"),

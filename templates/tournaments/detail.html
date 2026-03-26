@@ -7,9 +7,6 @@
 <div class="flash-item success" style="margin-bottom:12px;">
     Vous avez un match en attente au round {{ tournament.current_round }} :
     <strong>{{ user_pending_match.white_player }} (blancs)</strong> vs <strong>{{ user_pending_match.black_player }} (noirs)</strong>.
-    {% if tournament.mode == "player" or user.is_staff %}
-        <a class="btn primary" style="margin-left:10px;" href="{% url 'submit_result' tournament.pk user_pending_match.pk %}">Saisir le résultat</a>
-    {% endif %}
 </div>
 {% endif %}
 <div class="card">
@@ -80,9 +77,11 @@
     </div>
 
     <div class="card">
-        <h2 class="title" style="font-size:20px;">Participants ({{ registrations|length }})</h2>
+        <h2 class="title" style="font-size:20px;">
+            Participants (<span id="participants-count">{{ registrations|length }}</span>)
+        </h2>
         <div class="muted">Les couleurs seront équilibrées automatiquement à chaque round.</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+        <div id="participants-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
             {% for reg in registrations %}
                 <span class="tag">{{ reg.user|user_with_elo }}</span>
             {% empty %}
@@ -128,18 +127,51 @@
                             <strong>Noirs</strong> : {{ match.black_player|user_with_elo|default:"-" }}
                         </div>
                     {% endif %}
-                    <div>
+
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                         {% if match.result == "white" %}<span class="badge win">Victoire blancs</span>{% endif %}
                         {% if match.result == "black" %}<span class="badge win">Victoire noirs</span>{% endif %}
                         {% if match.result == "draw" %}<span class="badge draw">Nulle</span>{% endif %}
                         {% if match.result == "pending" %}<span class="badge">En attente</span>{% endif %}
                         {% if match.result == "bye" %}<span class="badge">Exempt</span>{% endif %}
-                        {% if user.is_authenticated and match.result == "pending" and match.result != "bye" and tournament.status == "running" %}
-                            {% if user.is_staff %}
-                                <a class="btn" style="margin-left:10px;" href="{% url 'submit_result' tournament.pk match.pk %}">Saisir</a>
-                            {% elif tournament.mode == "player" %}
-                                {% if match.white_player == user or match.black_player == user %}
-                                    <a class="btn" style="margin-left:10px;" href="{% url 'submit_result' tournament.pk match.pk %}">Saisir</a>
+
+                        {# --- Inline result form --- #}
+                        {% if user.is_authenticated and tournament.status == "running" and match.result != "bye" %}
+                            {# Pending match: show form to eligible players or admins #}
+                            {% if match.result == "pending" %}
+                                {% if user.is_staff or tournament.mode == "player" and match.white_player == user or tournament.mode == "player" and match.black_player == user %}
+                                    <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Saisir</button>
+                                    <span id="form-{{ match.pk }}" style="display:none;">
+                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:6px;">
+                                            {% csrf_token %}
+                                            <select name="result" class="select-inline">
+                                                <option value="">-- résultat --</option>
+                                                <option value="white">Victoire blancs</option>
+                                                <option value="black">Victoire noirs</option>
+                                                <option value="draw">Nulle</option>
+                                            </select>
+                                            <button type="submit" class="btn primary">Valider</button>
+                                            <button type="button" class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
+                                        </form>
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                {# Result already set: only admins can modify #}
+                                {% if user.is_staff %}
+                                    <button class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}'); return false;" id="btn-{{ match.pk }}">Modifier</button>
+                                    <span id="form-{{ match.pk }}" style="display:none;">
+                                        <form method="post" action="{% url 'submit_result' tournament.pk match.pk %}" style="display:inline-flex;align-items:center;gap:6px;">
+                                            {% csrf_token %}
+                                            <select name="result" class="select-inline">
+                                                <option value="">-- résultat --</option>
+                                                <option value="white" {% if match.result == "white" %}selected{% endif %}>Victoire blancs</option>
+                                                <option value="black" {% if match.result == "black" %}selected{% endif %}>Victoire noirs</option>
+                                                <option value="draw" {% if match.result == "draw" %}selected{% endif %}>Nulle</option>
+                                            </select>
+                                            <button type="submit" class="btn primary">Valider</button>
+                                            <button type="button" class="btn" onclick="toggleResultForm('form-{{ match.pk }}', 'btn-{{ match.pk }}')">✕</button>
+                                        </form>
+                                    </span>
                                 {% endif %}
                             {% endif %}
                         {% endif %}
@@ -151,4 +183,44 @@
         <p>Aucun round généré pour l'instant.</p>
     {% endfor %}
 </div>
+
+<script>
+function toggleResultForm(formId, btnId) {
+    var form = document.getElementById(formId);
+    var btn = document.getElementById(btnId);
+    if (form.style.display === 'none') {
+        form.style.display = 'inline';
+        btn.style.display = 'none';
+    } else {
+        form.style.display = 'none';
+        btn.style.display = 'inline-block';
+    }
+}
+
+{% if tournament.status == "registration" %}
+(function() {
+    var participantsUrl = "{% url 'tournament_participants_json' tournament.pk %}";
+    var lastCount = {{ registrations|length }};
+
+    setInterval(function() {
+        fetch(participantsUrl)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.count === lastCount) return;
+                lastCount = data.count;
+                document.getElementById('participants-count').textContent = data.count;
+                var list = document.getElementById('participants-list');
+                if (data.count === 0) {
+                    list.innerHTML = '<p>Aucun inscrit pour l\'instant.</p>';
+                } else {
+                    list.innerHTML = data.participants.map(function(p) {
+                        return '<span class="tag">' + p.label + '</span>';
+                    }).join('');
+                }
+            })
+            .catch(function() {});
+    }, 5000);
+})();
+{% endif %}
+</script>
 {% endblock %}

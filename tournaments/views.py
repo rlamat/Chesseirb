@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -109,16 +109,26 @@ def user_stats(user):
     black_wins = matches.filter(result=Match.RESULT_BLACK, black_player=user).count()
     white_win_rate = (white_wins / whites_played * 100) if whites_played else 0
     black_win_rate = (black_wins / blacks_played * 100) if blacks_played else 0
-    defeats = []
-    lost_matches = matches.filter(
-        (Q(result=Match.RESULT_WHITE) & Q(black_player=user))
-        | (Q(result=Match.RESULT_BLACK) & Q(white_player=user))
-    )
-    for m in lost_matches:
+    all_matches = []
+    for m in matches.select_related("round__tournament", "white_player", "black_player").order_by("-round__tournament", "round__number"):
         opponent = m.white_player if m.white_player != user else m.black_player
-        if opponent:
-            color = "blancs" if m.white_player == user else "noirs"
-            defeats.append({"opponent": opponent, "color": color, "round": m.round.number})
+        color = "blancs" if m.white_player == user else "noirs"
+        pts = m.points_for(user)
+        if m.result == Match.RESULT_BYE:
+            result_label = "Exempt"
+        elif pts == 1:
+            result_label = "Victoire"
+        elif pts == 0.5:
+            result_label = "Nulle"
+        else:
+            result_label = "Défaite"
+        all_matches.append({
+            "opponent": opponent,
+            "color": color,
+            "round": m.round.number,
+            "tournament": m.round.tournament,
+            "result": result_label,
+        })
     return {
         "wins": wins,
         "losses": losses,
@@ -127,7 +137,7 @@ def user_stats(user):
         "black_win_rate": round(black_win_rate, 1),
         "whites_played": whites_played,
         "blacks_played": blacks_played,
-        "defeats": defeats,
+        "all_matches": all_matches,
     }
 
 
@@ -294,6 +304,9 @@ def complete_tournament(request, pk):
 def can_submit_result(tournament, match, user):
     if match.is_bye:
         return False
+    # Once a result is set, only admins can modify it
+    if match.result != Match.RESULT_PENDING:
+        return user.is_staff
     if tournament.mode == Tournament.MODE_ADMIN:
         return user.is_staff
     return user.is_staff or match.involves(user)
@@ -397,6 +410,19 @@ def user_detail(request, user_id):
         "tournaments/user_detail.html",
         {"target_user": user, "stats": stats},
     )
+
+
+def tournament_participants_json(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+    registrations = TournamentRegistration.objects.filter(
+        tournament=tournament, is_active=True
+    ).select_related("user", "user__profile").order_by("joined_at")
+    data = []
+    for reg in registrations:
+        elo = getattr(getattr(reg.user, "profile", None), "chesscom_elo", None)
+        label = f"{reg.user.username} ({elo})" if elo else reg.user.username
+        data.append({"username": reg.user.username, "elo": elo, "label": label})
+    return JsonResponse({"participants": data, "count": len(data)})
 
 
 @login_required

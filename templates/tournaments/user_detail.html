@@ -18,14 +18,46 @@
             <li>Taux de victoire avec les blancs : {{ stats.white_win_rate }}%</li>
             <li>Taux de victoire avec les noirs : {{ stats.black_win_rate }}%</li>
         </ul>
-        <h4>Défaites</h4>
-        <ul>
-            {% for d in stats.defeats %}
-                <li>{{ d.opponent|user_with_elo }} ({{ d.color }}) - Round {{ d.round }}</li>
-            {% empty %}
-                <li>Aucune défaite enregistrée.</li>
-            {% endfor %}
-        </ul>
     </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <h2 class="title" style="font-size:20px;">Historique des matchs</h2>
+    {% if stats.all_matches %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tournoi</th>
+                <th>Round</th>
+                <th>Adversaire</th>
+                <th>Couleur</th>
+                <th>Résultat</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in stats.all_matches %}
+            <tr>
+                <td>{{ m.tournament.name }}</td>
+                <td>{{ m.round }}</td>
+                <td>{{ m.opponent|user_with_elo|default:"—" }}</td>
+                <td>{{ m.color }}</td>
+                <td>
+                    {% if m.result == "Victoire" %}
+                        <span class="text-win">{{ m.result }}</span>
+                    {% elif m.result == "Défaite" %}
+                        <span class="text-loss">{{ m.result }}</span>
+                    {% elif m.result == "Nulle" %}
+                        <span class="text-draw">{{ m.result }}</span>
+                    {% else %}
+                        <span class="muted">{{ m.result }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="muted">Aucun match enregistré.</p>
+    {% endif %}
 </div>
 {% endblock %}
